@@ -1,0 +1,80 @@
+name: Build levipack
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: "2.9.9"
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r28c
+          link-to-sdk: true
+
+      - name: Configure android arm64 release
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          set -euo pipefail
+          test -f xmake.lua
+          echo "NDK=$ANDROID_NDK_HOME"
+          xmake f -p android -a arm64-v8a -m release --ndk="$ANDROID_NDK_HOME" -y
+
+      - name: Build shared library
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          set -euo pipefail
+          xmake -y
+
+      - name: Package SystemVisuals.levipack
+        run: |
+          set -euo pipefail
+          echo "=== .so / .levipack under build ==="
+          find build -type f \( -name '*.so' -o -name '*.levipack' \) 2>/dev/null || true
+
+          SO=$(find . -type f -name 'libSystemVisuals.so' 2>/dev/null | head -1 || true)
+          if [ -z "${SO}" ]; then
+            SO=$(find build -type f -name '*.so' 2>/dev/null | head -1 || true)
+          fi
+          if [ -z "${SO}" ] || [ ! -f "${SO}" ]; then
+            echo "ERROR: shared library not found"
+            find build -type f 2>/dev/null | head -100
+            exit 1
+          fi
+          echo "library=${SO}"
+
+          test -f assets/icon.png
+          test -f scripts/package_levipack.py
+
+          mkdir -p dist
+          python3 scripts/package_levipack.py \
+            --library "${SO}" \
+            --icon assets/icon.png \
+            --output dist/SystemVisuals.levipack
+
+          python3 -c "import zipfile; print('entries', zipfile.ZipFile('dist/SystemVisuals.levipack').namelist())"
+          ls -lh dist/SystemVisuals.levipack
+
+      - name: Upload SystemVisuals.levipack
+        uses: actions/upload-artifact@v4
+        with:
+          name: SystemVisuals-levipack
+          path: dist/SystemVisuals.levipack
+          if-no-files-found: error

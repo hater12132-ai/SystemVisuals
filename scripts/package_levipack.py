@@ -9,16 +9,20 @@ def main() -> int:
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     lib, icon, out = a.library.resolve(), a.icon.resolve(), a.output.resolve()
-    if not lib.is_file() or not icon.is_file():
-        print("missing library or icon", file=sys.stderr)
+    if not lib.is_file():
+        print("missing library:", lib, file=sys.stderr)
         return 1
-    # Levi matches exact strings in minecraft_versions — list current known builds
+    if not icon.is_file():
+        print("missing icon:", icon, file=sys.stderr)
+        return 1
+    # Levi expects entry filename inside the zip to match manifest "entry"
+    entry_name = "libSystemVisuals.so"
     manifest = {
         "type": "preload-native",
         "name": "SystemVisuals",
         "author": "hater12132-ai",
         "version": "0.1.0",
-        "entry": "libSystemVisuals.so",
+        "entry": entry_name,
         "icon": "icon.png",
         "minecraft_versions": [
             "1.26.51.1",
@@ -36,9 +40,9 @@ def main() -> int:
         out.unlink()
     with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         z.writestr("manifest.json", json.dumps(manifest, indent=2) + "\n")
-        z.write(lib, "libSystemVisuals.so")
+        z.write(lib, entry_name)
         z.write(icon, "icon.png")
-    print(out)
+    print("wrote", out)
     return 0
 
 if __name__ == "__main__":
