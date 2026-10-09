@@ -13,6 +13,7 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -304,7 +305,8 @@ void clientInstanceUpdateDetour(void* self, void* a1) {
 }
 
 void* glProc(const char* name) {
-    void* p = eglGetProcAddress(name);
+    // eglGetProcAddress returns a function pointer type on Android NDK headers
+    void* p = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(eglGetProcAddress(name)));
     if (p) return p;
     void* egl = dlopen("libEGL.so", RTLD_NOW);
     if (egl) p = dlsym(egl, name);
