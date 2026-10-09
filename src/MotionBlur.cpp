@@ -1,6 +1,7 @@
 #include "bactro/MotionBlur.hpp"
 #include "bactro/HandChams.hpp"
 #include "bactro/TargetHUD.hpp"
+#include "bactro/ItemESP.hpp"
 #include "bactro/EntityOutline.hpp"
 #include "bactro/Status.hpp"
 
@@ -20,7 +21,7 @@
 #include <mutex>
 #include <string>
 
-#define MB_LOGI(...) __android_log_print(ANDROID_LOG_INFO, "SystemVisuals", __VA_ARGS__)
+#define MB_LOGI(...) __android_log_print(ANDROID_LOG_INFO, "BactroNative", __VA_ARGS__)
 
 // ---- GLES2 types / constants (avoid requiring system GLES headers) ----
 using GLenum = unsigned int;
@@ -422,10 +423,8 @@ EGLBoolean swapDetour(EGLDisplay dpy, EGLSurface surface) {
     try {
         bactro::handchams::onPostFrame();
         bactro::entityoutline::onPostFrame();
-    } catch (...) {
-    }
-    try {
         bactro::targethud::onPostFrame();
+        bactro::itemesp::onPostFrame();
     } catch (...) {
     }
     return g_swapOriginal ? g_swapOriginal(dpy, surface) : EGL_FALSE;

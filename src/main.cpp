@@ -191,7 +191,7 @@ void resolveEverythingAsync() {
                         bactro::handchams::onSignaturesReady();
     bactro::chamsesp::onSignaturesReady();
     bactro::targethud::onSignaturesReady();
-    bactro::itemesp::init();
+    bactro::itemesp::onSignaturesReady();
     bactro::entityoutline::onSignaturesReady();
     bactro::material::onSignaturesReady();
                 writeStatus("async init finished");
@@ -250,7 +250,7 @@ void registerMenus() {
     bactro::motionblur::registerModule();
     bactro::handchams::registerModule();
     bactro::targethud::registerModule();
-    bactro::itemesp::registerModMenu();
+    bactro::itemesp::registerModule();
 }
 
 } // namespace
@@ -289,6 +289,7 @@ public:
                                 bactro::chamsesp::shutdown();
                                 bactro::entityoutline::shutdown();
                                 bactro::targethud::shutdown();
+                                bactro::itemesp::shutdown();
         return true;
     }
 
@@ -299,6 +300,7 @@ public:
                                 bactro::chamsesp::shutdown();
                                 bactro::entityoutline::shutdown();
                                 bactro::targethud::shutdown();
+                                bactro::itemesp::shutdown();
         return true;
     }
 };
